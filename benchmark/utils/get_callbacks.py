@@ -1,4 +1,4 @@
-from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint, Callback
+from pytorch_lightning.callbacks import EarlyStopping, ModelCheckpoint, Callback, TQDMProgressBar
 
 def get_callbacks(args):
     monitor_mode = 'min' if 'loss' in args.logger.monitor else 'max'
@@ -16,5 +16,5 @@ def get_callbacks(args):
         patience=args.scheduler.earlystop_patience, 
         mode=monitor_mode, 
         verbose=True)
-    return [checkpoint_callback, early_stop_callback]
+    return [checkpoint_callback, early_stop_callback, TQDMProgressBar(refresh_rate=10)]
 
