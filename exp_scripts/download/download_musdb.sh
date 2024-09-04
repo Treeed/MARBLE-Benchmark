@@ -1,12 +1,13 @@
 # export PROJECT_ROOT=~/MARBLE-Benchmark
 
-cd $PROJECT_ROOT
-mkdir -p data/musdb
-cd data/musdb
+#cd $PROJECT_ROOT
+mkdir -p data/musdb18
+cd data/musdb18
 
 wget https://zenodo.org/record/1117372/files/musdb18.zip
 unzip musdb18.zip
 rm musdb18.zip
+cd ..
 
 musdbconvert musdb18 musdb18_wav
 rm -r musdb18

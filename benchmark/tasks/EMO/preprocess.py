@@ -108,7 +108,7 @@ def run_cmd_sync(cmd, cwd=None, interactive=False, timeout=None):
         kwargs["stdout"] = subprocess.PIPE
         kwargs["stderr"] = subprocess.PIPE
 
-    p = subprocess.Popen(shlex.split(cmd), cwd=cwd, **kwargs)
+    p = subprocess.Popen(cmd, cwd=cwd, **kwargs)
     try:
         p_res = p.communicate(timeout=timeout)
     except subprocess.TimeoutExpired as e:
@@ -148,7 +148,7 @@ def iter_emomusic(metadata_only=False):
         "arousal_cont_average",
         "arousal_cont_std",
     ]:
-        with open(pathlib.Path(d, f"{stem}.csv"), "r") as f:
+        with open(pathlib.Path(d, f"{stem}.csv"), "r", encoding="UTF-8") as f:
             for row in csv.DictReader(f):
                 row = {k: v.strip() for k, v in row.items()}
                 uid = str(int(row["song_id"])).zfill(4)

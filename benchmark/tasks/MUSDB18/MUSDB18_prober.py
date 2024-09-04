@@ -128,7 +128,7 @@ class MUSDB18Prober(bench.ProberForBertSeqLabel):
         padding = torch.zeros(input1.shape[0], 320, device=input1.device)  # [batch_size, 2, hidden_dim]
         input1 = torch.cat((input1, padding), dim=1)     # [batch_size. 160400]
 
-        if self.cfg.layer == "all":
+        if self.cfg.model.downstream_structure.components[0].layer == "all":
             with torch.no_grad():
                 num = input1.shape[1] // self.max_len + 1
                 if num <= 1:
@@ -142,7 +142,7 @@ class MUSDB18Prober(bench.ProberForBertSeqLabel):
             x = (F.softmax(self.aggregator, dim=0) * x).sum(dim=0)  # [batch_size, seq_length, hidden_dim]
         else:
             with torch.no_grad():
-                x = self.bert(input1, layer=int(self.cfg.layer), reduction="none")  # [batch_size, seq_length, hidden_dim]
+                x = self.bert(input1, layer=int(self.cfg.model.downstream_structure.components[0].layer), reduction="none")  # [batch_size, seq_length, hidden_dim]
 
         if x.shape[1] >= nb_frames:
             x = x[:, :nb_frames]
@@ -172,7 +172,7 @@ class MUSDB18Prober(bench.ProberForBertSeqLabel):
         x = torch.tanh(x)
 
         # apply 3-layers of stacked LSTM
-        lstm_out = self.lstm(x)
+        lstm_out = self.lstm(x.type(torch.float16))
 
         # lstm skip connection
         x = torch.cat([x, lstm_out[0]], -1)
@@ -305,7 +305,7 @@ class MUSDB18Prober(bench.ProberForBertSeqLabel):
     
     def test_epoch_end(self, outputs):
         self.log_metrics('test')
-        if self.cfg.layer == "all":
+        if self.cfg.model.downstream_structure.components[0].layer == "all":
             if not isinstance(self.aggregator, nn.Conv1d):
                 log_dict = self.log_weights('test')
                 self.log_dict(log_dict)

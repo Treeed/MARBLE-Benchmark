@@ -36,7 +36,7 @@ def get_logger(cfg):
 
     wandb.init(
         project=cfg.logger.wandb_proj_name,
-        entity='musicaudiopretrain', # team name
+        entity='freddyallesweg-fkjwnkefn', # team name
         name=cfg.logger.wandb_run_name, # run name
         dir=cfg.logger.wandb_dir
     )

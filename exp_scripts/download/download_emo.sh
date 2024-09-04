@@ -1,6 +1,6 @@
 # export PROJECT_ROOT=~/MARBLE-Benchmark
 
-cd $PROJECT_ROOT
+#cd $PROJECT_ROOT
 mkdir -p data/EMO
 cd data/EMO
 

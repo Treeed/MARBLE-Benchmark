@@ -24,11 +24,11 @@ def get_audio_datasets(args):
     train_sampler, valid_sampler, test_sampler = None, None, None
     train_collate_fn, valid_collate_fn, test_collate_fn = None, None, None
 
-    if args.dataset == "MUSDB18":
+    if args.dataset.dataset == "MUSDB18":
         dataset_kwargs = {
-            "root": args.audio_dir,
-            "target_file": args.target,
-            "sample_rate": args.target_sr,
+            "root": args.dataset.input_dir,
+            "target_file": args.dataset.target,
+            "sample_rate": args.dataset.target_sr,
         }
         source_augmentations = aug_from_str(["gain", "channelswap"])
         train_dataset = FixedSourcesTrackFolderDataset(split='train', seq_duration=6, source_augmentations=source_augmentations, random_chunks=True, random_track_mix=True, **dataset_kwargs)

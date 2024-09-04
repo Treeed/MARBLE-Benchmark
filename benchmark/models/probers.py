@@ -73,7 +73,7 @@ class MLPProberBase(pl.LightningModule):
         if hasattr(_cfg.dataset, 'pre_extract'):
             pretrained_extractor = _cfg.dataset.pre_extract.feature_extractor.pretrain
         else:
-            pretrained_extractor = _cfg.model.feature_extractor.pretrain
+            pretrained_extractor = _cfg.model.upstream_structure.feature_extractor.pretrain
         cfg.pretrained_extractor = pretrained_extractor 
         cfg.pre_trained_model_name = pretrained_extractor.name
         cfg.num_features = pretrained_extractor.num_features
@@ -436,9 +436,9 @@ class ProberForBertSeqLabel(ProberForBertUtterCLS):
         else:
             cfg.pre_trained_folder = huggingface_model_name
         
-        cfg.force_half = _cfg.model.feature_extractor.force_half
-        cfg.reduction = _cfg.model.feature_extractor.reduction
-        cfg.processor_normalize = _cfg.model.feature_extractor.pretrain.processor_normalize
+        cfg.force_half = _cfg.model.upstream_structure.feature_extractor.force_half
+        cfg.reduction = _cfg.model.upstream_structure.feature_extractor.reduction
+        cfg.processor_normalize = _cfg.model.upstream_structure.feature_extractor.pretrain.processor_normalize
     
     def validation_step(self, batch, batch_idx):
         x, y = batch

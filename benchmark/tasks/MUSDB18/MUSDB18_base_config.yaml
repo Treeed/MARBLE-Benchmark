@@ -5,7 +5,9 @@
 dataset:
   dataset: MUSDB18
   input_type: audio # [audio, feature]
-  input_dir: 
+  input_dir: data/musdb18
+  target: vocals.wav
+  target_sr: 24000
   metadata_dir: 
 
 
@@ -41,7 +43,7 @@ model:
 trainer: 
   # pytorch lightning trainer args
   auto_lr_find: false
-  accelerator: gpu
+  accelerator: cpu
   devices: 1
   strategy: null # [null, ddp]
   precision: 16
@@ -81,7 +83,7 @@ loss:
 
 
 logger:
-  wandb_off: false # turn off wandb
+  wandb_off: true # turn off wandb
   wandb_proj_name: Eval_MTGGenre_probing
   wandb_run_name: null
   wandb_dir: data
