@@ -43,7 +43,7 @@ model:
 trainer: 
   # pytorch lightning trainer args
   auto_lr_find: false
-  accelerator: cpu
+  accelerator: gpu
   devices: 1
   strategy: null # [null, ddp]
   precision: 16

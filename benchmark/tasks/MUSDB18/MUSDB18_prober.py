@@ -172,7 +172,7 @@ class MUSDB18Prober(bench.ProberForBertSeqLabel):
         x = torch.tanh(x)
 
         # apply 3-layers of stacked LSTM
-        lstm_out = self.lstm(x.type(torch.float16))
+        lstm_out = self.lstm(torch.float16)
 
         # lstm skip connection
         x = torch.cat([x, lstm_out[0]], -1)
