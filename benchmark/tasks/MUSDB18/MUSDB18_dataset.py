@@ -220,7 +220,7 @@ class FixedSourcesTrackFolderDataset(UnmixDataset):
 
     def __getitem__(self, index):
         # first, get target track
-        track = self.mus.tracks[index/self.samples_per_track]
+        track = self.mus.tracks[int(index/self.samples_per_track)]
 
         if self.split == "train" and self.seq_duration:
             if self.random_chunks:
