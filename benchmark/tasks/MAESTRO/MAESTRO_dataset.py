@@ -10,7 +10,6 @@ from torch.utils import data
 import h5py
 import csv
 import librosa
-import sox
 import pickle
 import torchaudio
 import torch
