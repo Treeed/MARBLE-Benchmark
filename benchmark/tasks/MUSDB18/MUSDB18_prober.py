@@ -142,6 +142,7 @@ class MUSDB18Prober(bench.ProberForBertSeqLabel):
             x = (F.softmax(self.aggregator, dim=0) * x).sum(dim=0)  # [batch_size, seq_length, hidden_dim]
         else:
             with torch.no_grad():
+                self.log_layer("bert")
                 x = self.bert(input1, layer=int(self.cfg.model.downstream_structure.components[0].layer), reduction="none")  # [batch_size, seq_length, hidden_dim]
 
         if x.shape[1] >= nb_frames:
@@ -172,7 +173,7 @@ class MUSDB18Prober(bench.ProberForBertSeqLabel):
         x = torch.tanh(x)
 
         # apply 3-layers of stacked LSTM
-        lstm_out = self.lstm(torch.float16)
+        lstm_out = self.lstm(x.type(torch.float16))
 
         # lstm skip connection
         x = torch.cat([x, lstm_out[0]], -1)
@@ -198,6 +199,12 @@ class MUSDB18Prober(bench.ProberForBertSeqLabel):
         x = F.relu(x) * mix
         # permute back to (nb_samples, nb_channels, nb_bins, nb_frames)
         return x.permute(1, 2, 3, 0)
+
+
+    def log_layer(self, layer_name):
+        """Logs which layer is currently being processed"""
+        # Logs to the logger, replace with self.log for more advanced loggers
+        self.print(f"current_layer {layer_name}")
 
     @torch.no_grad()
     def decoder(self, audio, spectrograms):
