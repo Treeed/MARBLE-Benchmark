@@ -2,7 +2,6 @@ Cython
 numpy
 pytorch-lightning==1.9.4  # no need to install this on cam
 torchaudio  # should use v0.9 on cam
-transformers
 librosa
 nnAudio
 wandb

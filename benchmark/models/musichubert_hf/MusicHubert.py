@@ -108,6 +108,7 @@ class MusicHubertModel(HubertModel):
         )
         return_dict = return_dict if return_dict is not None else self.config.use_return_dict
 
+        print("extract features...")
         extract_features = self.feature_extractor(input_values)
         extract_features = extract_features.transpose(1, 2)
 
