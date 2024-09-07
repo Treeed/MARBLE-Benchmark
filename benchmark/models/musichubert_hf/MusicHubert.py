@@ -43,6 +43,7 @@ class MusicHubertFeatureProjection(nn.Module):
         # non-projected hidden states are needed for quantization
         if self.feat_proj_layer_norm:
             hidden_states = self.layer_norm(hidden_states)
+        print("projection")
         hidden_states = self.projection(hidden_states)
         hidden_states = self.dropout(hidden_states)
         return hidden_states

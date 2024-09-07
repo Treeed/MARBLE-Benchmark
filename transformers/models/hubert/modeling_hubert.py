@@ -302,8 +302,11 @@ class HubertPositionalConvEmbedding(nn.Module):
     def forward(self, hidden_states):
         hidden_states = hidden_states.transpose(1, 2)
 
+        print("conv")
         hidden_states = self.conv(hidden_states)
+        print("pad")
         hidden_states = self.padding(hidden_states)
+        print("activation")
         hidden_states = self.activation(hidden_states)
 
         hidden_states = hidden_states.transpose(1, 2)
@@ -841,14 +844,19 @@ class HubertEncoderLayer(nn.Module):
 
     def forward(self, hidden_states, attention_mask=None, output_attentions=False):
         attn_residual = hidden_states
+        print("attention")
         hidden_states, attn_weights, _ = self.attention(
             hidden_states, attention_mask=attention_mask, output_attentions=output_attentions
         )
+        print("dropout")
         hidden_states = self.dropout(hidden_states)
         hidden_states = attn_residual + hidden_states
 
+        print("norm")
         hidden_states = self.layer_norm(hidden_states)
+        print("feed forward")
         hidden_states = hidden_states + self.feed_forward(hidden_states)
+        print("norm")
         hidden_states = self.final_layer_norm(hidden_states)
 
         outputs = (hidden_states,)
@@ -969,6 +977,7 @@ class HubertEncoder(nn.Module):
                     attention_mask.shape[0], 1, attention_mask.shape[-1], attention_mask.shape[-1]
                 )
 
+        print("pos_conv_embed")
         position_embeddings = self.pos_conv_embed(hidden_states)
         hidden_states = hidden_states + position_embeddings
         hidden_states = self.layer_norm(hidden_states)
@@ -976,7 +985,8 @@ class HubertEncoder(nn.Module):
 
         deepspeed_zero3_is_enabled = is_deepspeed_zero3_enabled()
 
-        for layer in self.layers:
+        for num, layer in enumerate(self.layers):
+            print(f"HubertEncoderLayer{num}")
             if output_hidden_states:
                 all_hidden_states = all_hidden_states + (hidden_states,)
 
