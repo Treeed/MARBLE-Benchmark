@@ -142,7 +142,7 @@ class MUSDB18Prober(bench.ProberForBertSeqLabel):
             x = (F.softmax(self.aggregator, dim=0) * x).sum(dim=0)  # [batch_size, seq_length, hidden_dim]
         else:
             with torch.no_grad():
-                self.log_layer("bert")
+                print("bert")
                 x = self.bert(input1, layer=int(self.cfg.model.downstream_structure.components[0].layer), reduction="none")  # [batch_size, seq_length, hidden_dim]
 
         if x.shape[1] >= nb_frames:
@@ -165,27 +165,34 @@ class MUSDB18Prober(bench.ProberForBertSeqLabel):
 
         # to (nb_frames*nb_samples, nb_channels*nb_bins)
         # and encode to (nb_frames*nb_samples, hidden_size)
+        print("fc1")
         x = self.fc1(x.reshape(-1, self.nb_channels * (self.nb_bins + self.nb_features)))
         # normalize every instance in a batch
+        print("bn1")
         x = self.bn1(x)
         x = x.reshape(nb_frames, nb_samples, self.hidden_size)
         # squash range ot [-1, 1]
         x = torch.tanh(x)
 
         # apply 3-layers of stacked LSTM
+        print("lstm")
         lstm_out = self.lstm(x.type(torch.float16))
 
         # lstm skip connection
         x = torch.cat([x, lstm_out[0]], -1)
 
         # first dense stage + batch norm
+        print("fc2")
         x = self.fc2(x.reshape(-1, x.shape[-1]))
+        print("bn2")
         x = self.bn2(x)
 
         x = F.relu(x)
 
         # second dense stage + layer norm
+        print("fc3")
         x = self.fc3(x)
+        print("bn3")
         x = self.bn3(x)
 
         # reshape back to original dim
