@@ -142,7 +142,7 @@ class MUSDB18Prober(bench.ProberForBertSeqLabel):
             x = (F.softmax(self.aggregator, dim=0) * x).sum(dim=0)  # [batch_size, seq_length, hidden_dim]
         else:
             with torch.no_grad():
-                print("bert")
+                #fastongpuprint("bert")
                 x = self.bert(input1, layer=int(self.cfg.model.downstream_structure.components[0].layer), reduction="none")  # [batch_size, seq_length, hidden_dim]
 
         if x.shape[1] >= nb_frames:
@@ -165,34 +165,34 @@ class MUSDB18Prober(bench.ProberForBertSeqLabel):
 
         # to (nb_frames*nb_samples, nb_channels*nb_bins)
         # and encode to (nb_frames*nb_samples, hidden_size)
-        print("fc1")
+        #fastongpuprint("fc1")
         x = self.fc1(x.reshape(-1, self.nb_channels * (self.nb_bins + self.nb_features)))
         # normalize every instance in a batch
-        print("bn1")
+        #fastongpuprint("bn1")
         x = self.bn1(x)
         x = x.reshape(nb_frames, nb_samples, self.hidden_size)
         # squash range ot [-1, 1]
         x = torch.tanh(x)
 
         # apply 3-layers of stacked LSTM
-        print("lstm")
+        #fastongpuprint("lstm")
         lstm_out = self.lstm(x.type(torch.float16))
 
         # lstm skip connection
         x = torch.cat([x, lstm_out[0]], -1)
 
         # first dense stage + batch norm
-        print("fc2")
+        #fastongpuprint("fc2")
         x = self.fc2(x.reshape(-1, x.shape[-1]))
-        print("bn2")
+        #fastongpuprint("bn2")
         x = self.bn2(x)
 
         x = F.relu(x)
 
         # second dense stage + layer norm
-        print("fc3")
+        #fastongpuprint("fc3")
         x = self.fc3(x)
-        print("bn3")
+        #fastongpuprint("bn3")
         x = self.bn3(x)
 
         # reshape back to original dim
@@ -284,14 +284,18 @@ class MUSDB18Prober(bench.ProberForBertSeqLabel):
             self.all_metrics.add('sdr')
     
     def training_step(self, batch, batch_idx):
+        print("start step")
         x, y = batch
         X = self.encoder(x)
         Y = self.encoder(y)
+        print("start net")
         Y_pred = self(X, x)
+        print("net done")
         y_pred = self.decoder(x, Y_pred)
         loss = self.loss(Y_pred, Y)
         self.log('train_loss', loss, prog_bar=True, sync_dist=True)
         # self.update_metrics('train', y, y_pred)
+        print("step done")
         return loss
 
     def validation_step(self, batch, batch_idx):
