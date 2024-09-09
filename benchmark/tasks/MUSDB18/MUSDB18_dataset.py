@@ -3,8 +3,8 @@ import random
 from pathlib import Path
 from typing import Optional, Union, Tuple, List, Any, Callable
 
-import audiofile
 import musdb
+import soundfile
 import torch
 import torch.utils.data
 import torchaudio
@@ -148,6 +148,13 @@ class UnmixDataset(torch.utils.data.Dataset):
         return ""
 
 
+def load_and_seek(*args, offset, duration, bitrate=24000, overbuffer=25000, **kwargs):
+    start = int(offset*bitrate)
+    duration = int(duration*bitrate)
+    start_block_start = max(start - overbuffer, 0)
+    dat = soundfile.read(*args, start=start_block_start, stop=start+duration, **kwargs)[0]
+    return dat[start - start_block_start:].T
+
 
 class FixedSourcesTrackFolderDataset(UnmixDataset):
     def __init__(
@@ -229,7 +236,7 @@ class FixedSourcesTrackFolderDataset(UnmixDataset):
             # assemble the mixture of target and interferers
             audio_sources = []
             # load target
-            target_audio, _ = audiofile.read(
+            target_audio = load_and_seek(
                 track_path / self.target_file, offset=start, duration=self.seq_duration
             )
             target_audio = torch.from_numpy(target_audio)
@@ -245,7 +252,7 @@ class FixedSourcesTrackFolderDataset(UnmixDataset):
                         min_duration = self.tracks[random_idx]["min_duration"]
                         start = random.uniform(0, min_duration - self.seq_duration)
 
-                audio, _ = audiofile.read(track_path / source, offset=start, duration=self.seq_duration)
+                audio = load_and_seek(track_path / source, offset=start, duration=self.seq_duration)
                 audio = torch.from_numpy(audio)
                 audio = self.source_augmentations(audio)
                 audio_sources.append(audio)
@@ -276,7 +283,7 @@ class FixedSourcesTrackFolderDataset(UnmixDataset):
                     continue
 
                 if self.seq_duration is not None:
-                    durations = list(map(audiofile.duration, source_paths))
+                    durations = [soundfile.info(p).duration for p in source_paths]
                     # get minimum duration of track
                     min_duration = min(durations)
                     if min_duration > self.seq_duration:
