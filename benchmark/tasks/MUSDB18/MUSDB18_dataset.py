@@ -3,6 +3,7 @@ import random
 from pathlib import Path
 from typing import Optional, Union, Tuple, List, Any, Callable
 
+import audiofile
 import musdb
 import torch
 import torch.utils.data
@@ -229,9 +230,10 @@ class FixedSourcesTrackFolderDataset(UnmixDataset):
             # assemble the mixture of target and interferers
             audio_sources = []
             # load target
-            target_audio, _ = load_audio(
-                track_path / self.target_file, start=start, dur=self.seq_duration
+            target_audio, _ = audiofile.read(
+                track_path / self.target_file, offset=start, duration=self.seq_duration
             )
+            target_audio = torch.from_numpy(target_audio)
             target_audio = self.resampler(target_audio)
             target_audio = self.source_augmentations(target_audio)
             audio_sources.append(target_audio)
@@ -245,7 +247,8 @@ class FixedSourcesTrackFolderDataset(UnmixDataset):
                         min_duration = self.tracks[random_idx]["min_duration"]
                         start = random.uniform(0, min_duration - self.seq_duration)
 
-                audio, _ = load_audio(track_path / source, start=start, dur=self.seq_duration)
+                audio, _ = audiofile.read(track_path / source, offset=start, duration=self.seq_duration)
+                audio = torch.from_numpy(audio)
                 audio = self.resampler(audio)
                 audio = self.source_augmentations(audio)
                 audio_sources.append(audio)
@@ -278,9 +281,9 @@ class FixedSourcesTrackFolderDataset(UnmixDataset):
                     continue
 
                 if self.seq_duration is not None:
-                    infos = list(map(load_info, source_paths))
+                    durations = list(map(audiofile.duration, source_paths))
                     # get minimum duration of track
-                    min_duration = min(i["duration"] for i in infos)
+                    min_duration = min(durations)
                     if min_duration > self.seq_duration:
                         yield ({"path": track_path, "min_duration": min_duration})
                 else:
