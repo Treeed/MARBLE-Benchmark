@@ -27,7 +27,7 @@ def main(args):
     assert cfg.trainer.paradigm == 'probe', "paradigm must be probe for probe.py"
     pl.seed_everything(cfg.trainer.seed)
 
-    logger = True #get_logger(cfg)
+    logger = get_logger(cfg)
     model = get_model(cfg)
     train_loader, valid_loader, test_loader = get_dataloaders(cfg)
     callbacks = get_callbacks(cfg)

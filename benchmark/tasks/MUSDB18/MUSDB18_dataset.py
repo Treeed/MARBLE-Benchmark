@@ -155,7 +155,7 @@ class FixedSourcesTrackFolderDataset(UnmixDataset):
         split: str = "train",
         target_file: str = "vocals.wav",
         mixture_file: str = "mixture.wav",
-        interferer_files: List[str] = ["bass", "drums", "other"],
+        interferer_files: List[str] = ["bass.wav", "drums.wav", "other.wav"],
         seq_duration: Optional[float] = None,
         samples_per_track: int = 64,
         random_chunks: bool = False,
@@ -202,49 +202,51 @@ class FixedSourcesTrackFolderDataset(UnmixDataset):
         self.random_chunks = random_chunks
         self.source_augmentations = source_augmentations
         # set the input and output files (accept glob)
-        self.target_stem = target_file
+        self.target_file = target_file
         self.mixture_file = mixture_file
         self.interferer_files = interferer_files
-        self.source_files = self.interferer_files + [self.target_stem]
+        self.source_files = self.interferer_files + [self.target_file]
+        self.resampler = torchaudio.transforms.Resample(44100, 24000)
         self.seed = seed
         random.seed(self.seed)
 
-        self.mus = musdb.DB(
-            root=root,
-            is_wav=False,
-            split= None if split=="test" else split,
-            subsets= "train" if split=="valid" else split,
-            download=False,
-            sample_rate=24000
-        )
+        self.tracks = list(self.get_tracks())
+        if not len(self.tracks):
+            raise RuntimeError("No tracks found")
 
     def __getitem__(self, index):
-        print("getting a thing")
         # first, get target track
-        track = self.mus.tracks[int(index/self.samples_per_track)]
+        track_path = self.tracks[index // self.samples_per_track]["path"]
+        min_duration = self.tracks[index // self.samples_per_track]["min_duration"]
 
         if self.split == "train" and self.seq_duration:
             if self.random_chunks:
                 # determine start seek by target duration
-                start = random.uniform(0, track.duration - self.seq_duration)
+                start = random.uniform(0, min_duration - self.seq_duration)
             else:
                 start = 0
 
             # assemble the mixture of target and interferers
             audio_sources = []
             # load target
-            track.chunk_duration = self.seq_duration
-            track.chunk_start = start
-            target_audio = track.targets[self.target_stem].audio.T
-            target_audio = torch.from_numpy(target_audio)
+            target_audio, _ = load_audio(
+                track_path / self.target_file, start=start, dur=self.seq_duration
+            )
+            target_audio = self.resampler(target_audio)
             target_audio = self.source_augmentations(target_audio)
             audio_sources.append(target_audio)
             # load interferers
-            for source_stem in self.interferer_files:
+            for source in self.interferer_files:
                 # optionally select a random track for each source
+                if self.random_track_mix:
+                    random_idx = random.choice(range(len(self.tracks)))
+                    track_path = self.tracks[random_idx]["path"]
+                    if self.random_chunks:
+                        min_duration = self.tracks[random_idx]["min_duration"]
+                        start = random.uniform(0, min_duration - self.seq_duration)
 
-                audio = track.targets[source_stem].audio.T
-                audio = torch.from_numpy(audio)
+                audio, _ = load_audio(track_path / source, start=start, dur=self.seq_duration)
+                audio = self.resampler(audio)
                 audio = self.source_augmentations(audio)
                 audio_sources.append(audio)
 
@@ -255,14 +257,34 @@ class FixedSourcesTrackFolderDataset(UnmixDataset):
             y = stems[0]
         else:
             # load all sources
-            x = track.audio.T
-            y = track.targets[self.target_stem].audio.T
-        print("got a thing")
+            x, _ = load_audio(track_path / self.mixture_file)
+            x = self.resampler(x)
+            y, _ = load_audio(track_path / self.target_file)
+            y = self.resampler(y)
+
         return x, y
 
     def __len__(self):
-        return len(self.mus.tracks) * self.samples_per_track
+        return len(self.tracks) * self.samples_per_track
 
+    def get_tracks(self):
+        """Loads input and output tracks"""
+        p = Path(self.root, self.split)
+        for track_path in tqdm.tqdm(p.iterdir()):
+            if track_path.is_dir():
+                source_paths = [track_path / s for s in self.source_files]
+                if not all(sp.exists() for sp in source_paths):
+                    print("Exclude track ", track_path)
+                    continue
+
+                if self.seq_duration is not None:
+                    infos = list(map(load_info, source_paths))
+                    # get minimum duration of track
+                    min_duration = min(i["duration"] for i in infos)
+                    if min_duration > self.seq_duration:
+                        yield ({"path": track_path, "min_duration": min_duration})
+                else:
+                    yield ({"path": track_path, "min_duration": None})
 
 
 class MUSDBDataset(UnmixDataset):
