@@ -219,6 +219,7 @@ class FixedSourcesTrackFolderDataset(UnmixDataset):
         )
 
     def __getitem__(self, index):
+        print("getting a thing")
         # first, get target track
         track = self.mus.tracks[int(index/self.samples_per_track)]
 
@@ -256,7 +257,7 @@ class FixedSourcesTrackFolderDataset(UnmixDataset):
             # load all sources
             x = track.audio.T
             y = track.targets[self.target_stem].audio.T
-
+        print("got a thing")
         return x, y
 
     def __len__(self):

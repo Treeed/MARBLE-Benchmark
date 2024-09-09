@@ -123,6 +123,7 @@ class MUSDB18Prober(bench.ProberForBertSeqLabel):
 
         mix = stft.detach().clone()
 
+        print("bert")
         x = x.mean(dim=1)
         input1 = self.bert.process_wav(x).to(x.device)  # [batch_size, seq_length]
         padding = torch.zeros(input1.shape[0], 320, device=input1.device)  # [batch_size, 2, hidden_dim]
@@ -145,6 +146,7 @@ class MUSDB18Prober(bench.ProberForBertSeqLabel):
                 #fastongpuprint("bert")
                 x = self.bert(input1, layer=int(self.cfg.model.downstream_structure.components[0].layer), reduction="none")  # [batch_size, seq_length, hidden_dim]
 
+        print("downstream")
         if x.shape[1] >= nb_frames:
             x = x[:, :nb_frames]
         else:
@@ -206,12 +208,6 @@ class MUSDB18Prober(bench.ProberForBertSeqLabel):
         x = F.relu(x) * mix
         # permute back to (nb_samples, nb_channels, nb_bins, nb_frames)
         return x.permute(1, 2, 3, 0)
-
-
-    def log_layer(self, layer_name):
-        """Logs which layer is currently being processed"""
-        # Logs to the logger, replace with self.log for more advanced loggers
-        self.print(f"current_layer {layer_name}")
 
     @torch.no_grad()
     def decoder(self, audio, spectrograms):
@@ -291,7 +287,7 @@ class MUSDB18Prober(bench.ProberForBertSeqLabel):
         print("start net")
         Y_pred = self(X, x)
         print("net done")
-        y_pred = self.decoder(x, Y_pred)
+        #y_pred = self.decoder(x, Y_pred)
         loss = self.loss(Y_pred, Y)
         self.log('train_loss', loss, prog_bar=True, sync_dist=True)
         # self.update_metrics('train', y, y_pred)

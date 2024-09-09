@@ -201,9 +201,9 @@ class HubertNoLayerNormConvLayer(nn.Module):
         self.activation = ACT2FN[config.feat_extract_activation]
 
     def forward(self, hidden_states):
-        print("conv")
+        #fastongpuprint("conv")
         hidden_states = self.conv(hidden_states)
-        print("activation")
+        #fastongpuprint("activation")
         hidden_states = self.activation(hidden_states)
         return hidden_states
 
@@ -255,11 +255,11 @@ class HubertGroupNormConvLayer(nn.Module):
         self.layer_norm = nn.GroupNorm(num_groups=self.out_conv_dim, num_channels=self.out_conv_dim, affine=True)
 
     def forward(self, hidden_states):
-        print("conv")
+        #fastongpuprint("conv")
         hidden_states = self.conv(hidden_states)
-        print("norm")
+        #fastongpuprint("norm")
         hidden_states = self.layer_norm(hidden_states)
-        print("activation")
+        #fastongpuprint("activation")
         hidden_states = self.activation(hidden_states)
         return hidden_states
 
@@ -359,7 +359,7 @@ class HubertFeatureEncoder(nn.Module):
             hidden_states.requires_grad = True
 
         for conv_layer in self.conv_layers:
-            print(conv_layer._get_name())
+            #fastongpu print(conv_layer._get_name())
             if self._requires_grad and self.gradient_checkpointing and self.training:
                 hidden_states = self._gradient_checkpointing_func(
                     conv_layer.__call__,
