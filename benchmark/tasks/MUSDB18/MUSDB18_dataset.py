@@ -154,9 +154,9 @@ class FixedSourcesTrackFolderDataset(UnmixDataset):
         self,
         root: str,
         split: str = "train",
-        target_file: str = "vocals.wav",
-        mixture_file: str = "mixture.wav",
-        interferer_files: List[str] = ["bass.wav", "drums.wav", "other.wav"],
+        target_file: str = "vocals.mp3",
+        mixture_file: str = "mixture.mp3",
+        interferer_files: List[str] = ["bass.mp3", "drums.mp3", "other.mp3"],
         seq_duration: Optional[float] = None,
         samples_per_track: int = 64,
         random_chunks: bool = False,
@@ -207,7 +207,6 @@ class FixedSourcesTrackFolderDataset(UnmixDataset):
         self.mixture_file = mixture_file
         self.interferer_files = interferer_files
         self.source_files = self.interferer_files + [self.target_file]
-        self.resampler = torchaudio.transforms.Resample(44100, 24000)
         self.seed = seed
         random.seed(self.seed)
 
@@ -234,7 +233,6 @@ class FixedSourcesTrackFolderDataset(UnmixDataset):
                 track_path / self.target_file, offset=start, duration=self.seq_duration
             )
             target_audio = torch.from_numpy(target_audio)
-            target_audio = self.resampler(target_audio)
             target_audio = self.source_augmentations(target_audio)
             audio_sources.append(target_audio)
             # load interferers
@@ -249,7 +247,6 @@ class FixedSourcesTrackFolderDataset(UnmixDataset):
 
                 audio, _ = audiofile.read(track_path / source, offset=start, duration=self.seq_duration)
                 audio = torch.from_numpy(audio)
-                audio = self.resampler(audio)
                 audio = self.source_augmentations(audio)
                 audio_sources.append(audio)
 
@@ -261,9 +258,7 @@ class FixedSourcesTrackFolderDataset(UnmixDataset):
         else:
             # load all sources
             x, _ = load_audio(track_path / self.mixture_file)
-            x = self.resampler(x)
             y, _ = load_audio(track_path / self.target_file)
-            y = self.resampler(y)
 
         return x, y
 

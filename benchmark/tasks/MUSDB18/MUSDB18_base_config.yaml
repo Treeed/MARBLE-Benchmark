@@ -5,8 +5,8 @@
 dataset:
   dataset: MUSDB18
   input_type: audio # [audio, feature]
-  input_dir: data/musdb18
-  target: vocals.wav
+  input_dir: data/musdb18_mp3
+  target: vocals.mp3
   target_sr: 24000
   metadata_dir: 
 
